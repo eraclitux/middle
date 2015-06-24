@@ -3,20 +3,11 @@
 package httph
 
 import (
+	"log"
 	"net/http"
 
 	"gopkg.in/mgo.v2"
 )
-
-const (
-	// MongoSession is used to access shared MongoDb session
-	// in SharedData.
-	MongoSession = "mongo-session"
-)
-
-// SharedData is a threadsafe container that let
-// share data between dirrent http handlers.
-var SharedData HTTPSharer
 
 // WithCORS is a decorator function that adds relevant headers to response
 // to permit CORS requests.
@@ -43,13 +34,20 @@ func WithMongo(session *mgo.Session, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s := session.Copy()
 		defer s.Close()
-		k := MongoSession
-		SharedData.Insert(r, k, s)
-		defer SharedData.Delete(r, k)
+		SharedData.Insert(r, MongoSession, s)
+		defer SharedData.Delete(r, MongoSession)
 		fn(w, r)
 	}
 }
 
-func init() {
-	SharedData = newHTTPSharer()
+// WithLog is a decorator that calls Println method
+// of provided logger to log received requests.
+// Format is:
+// <http method> <remote addr> <requested url>
+func WithLog(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
+	//TODO use constants to define format like in log package.
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Println(r.Method, r.RemoteAddr, r.URL)
+		fn(w, r)
+	}
 }

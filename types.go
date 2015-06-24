@@ -6,11 +6,21 @@ import (
 	"sync"
 )
 
+const (
+	// MongoSession is used to access shared MongoDb session
+	// in SharedData.
+	MongoSession = "mongo-session"
+)
+
+// SharedData is a threadsafe container that enables
+// to share data between http handlers.
+var SharedData HTTPSharer
+
 type httpVars map[*http.Request]map[string]interface{}
 
 var httpVarsLock sync.RWMutex
 
-// HTTPSharer is a thread safe way to share data
+// HTTPSharer interface define a container to store data
 // between net/http handlers.
 type HTTPSharer interface {
 	Insert(r *http.Request, k string, v interface{})
@@ -26,6 +36,7 @@ func (m httpVars) init(r *http.Request) {
 	m[r] = map[string]interface{}{}
 }
 
+// Insert inserts a key/value pair for a given *http.Request.
 func (m httpVars) Insert(r *http.Request, k string, v interface{}) {
 	httpVarsLock.Lock()
 	defer httpVarsLock.Unlock()
@@ -35,6 +46,7 @@ func (m httpVars) Insert(r *http.Request, k string, v interface{}) {
 	m[r][k] = v
 }
 
+// Get retrieves a key/value pair for a given *http.Request
 func (m httpVars) Get(r *http.Request, k string) (interface{}, bool) {
 	httpVarsLock.RLock()
 	defer httpVarsLock.RUnlock()
@@ -48,17 +60,20 @@ func (m httpVars) Get(r *http.Request, k string) (interface{}, bool) {
 	return v, true
 }
 
+// Delete removes the key/value pair for the provided k.
 func (m httpVars) Delete(r *http.Request, k string) error {
 	httpVarsLock.Lock()
 	defer httpVarsLock.Unlock()
 	n, found := m[r]
 	if !found {
-		m[r] = map[string]interface{}{}
 		return errors.New("request key not found")
 	}
 	delete(n, k)
 	return nil
 }
+
+// drop frees memory deleting all key/value pairs for a given
+// *http.Request.
 func (m httpVars) drop(r *http.Request) {
 	httpVarsLock.Lock()
 	defer httpVarsLock.Unlock()
@@ -70,4 +85,8 @@ func (m httpVars) drop(r *http.Request) {
 func newHTTPSharer() HTTPSharer {
 	m := make(httpVars)
 	return m
+}
+
+func init() {
+	SharedData = newHTTPSharer()
 }
