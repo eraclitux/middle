@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE.txt file.
 
-// Package httph esposes functions & types usefull
+// Package httph exposes functions & types usefull
 // when dealing with net/http.
 package httph
 

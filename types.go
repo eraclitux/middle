@@ -18,15 +18,15 @@ const (
 
 // SharedData is a threadsafe container that enables
 // to share data between http handlers.
-var SharedData HTTPSharer
+var SharedData Sharer
 
 type httpVars map[*http.Request]map[string]interface{}
 
 var httpVarsLock sync.RWMutex
 
-// HTTPSharer interface define a container to store data
+// Sharer interface defines a container to store data
 // between net/http handlers.
-type HTTPSharer interface {
+type Sharer interface {
 	Insert(r *http.Request, k string, v interface{})
 	Get(r *http.Request, k string) (interface{}, bool)
 	Delete(r *http.Request, k string) error
@@ -84,13 +84,13 @@ func (m httpVars) drop(r *http.Request) {
 	delete(m, r)
 }
 
-// newHTTPSharer returns a thread safe type for sharing data
+// newSharer returns a thread safe type for sharing data
 // between net/http handlers.
-func newHTTPSharer() HTTPSharer {
+func newSharer() Sharer {
 	m := make(httpVars)
 	return m
 }
 
 func init() {
-	SharedData = newHTTPSharer()
+	SharedData = newSharer()
 }
