@@ -17,7 +17,7 @@ const (
 )
 
 // SharedData is a threadsafe container that enables
-// to share data between http handlers.
+// to share data between http handlers decorators.
 var SharedData Sharer
 
 type httpVars map[*http.Request]map[string]interface{}
@@ -45,7 +45,7 @@ func (m httpVars) Insert(r *http.Request, k string, v interface{}) {
 	httpVarsLock.Lock()
 	defer httpVarsLock.Unlock()
 	if _, ok := m[r]; !ok {
-		panic("cannot find *http.Request in HTTPRequestSetter, use Init() and defer Drop()")
+		panic("cannot find *http.Request in HTTPRequestSetter, use init() and defer drop()")
 	}
 	m[r][k] = v
 }
