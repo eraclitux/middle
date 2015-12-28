@@ -3,7 +3,7 @@
 // that can be found in the LICENSE.txt file.
 
 // Package middle exposes functions & types usefull
-// when dealing with net/http.
+// when dealing with http services.
 package middle
 
 import (
@@ -44,6 +44,17 @@ func WithMongo(session *mgo.Session, fn http.HandlerFunc) http.HandlerFunc {
 		defer s.Close()
 		SharedData.Insert(r, MongoSession, s)
 		defer SharedData.Delete(r, MongoSession)
+		fn(w, r)
+	}
+}
+
+// WithGenericData is a decorator function that let passed HandlerFunc
+// to use a generic data. Caution must be used and the passed interfece{}
+// must be only readen
+func WithGenericData(v interface{}, fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		SharedData.Insert(r, GenericData, v)
+		defer SharedData.Delete(r, GenericData)
 		fn(w, r)
 	}
 }

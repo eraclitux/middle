@@ -14,6 +14,7 @@ const (
 	// MongoSession is used to access shared MongoDb session
 	// in SharedData.
 	MongoSession = "mongo-session"
+	GenericData  = "generic-data"
 )
 
 // SharedData is a threadsafe container that enables
