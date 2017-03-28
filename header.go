@@ -1,4 +1,4 @@
-package httph
+package middle
 
 import "net/http"
 

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE.txt file.
 
-package httph_test
+package middle_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/eraclitux/httph"
+	"github.com/eraclitux/middle"
 )
 
 func barHanlder(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func fooHanlder(w http.ResponseWriter, r *http.Request) {
 func ExampleWithLog() {
 	InfoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
 
-	http.HandleFunc("/bar", httph.WithLog(InfoLogger, barHanlder))
-	http.HandleFunc("/foo", httph.WithLog(InfoLogger, fooHanlder))
+	http.HandleFunc("/bar", middle.WithLog(InfoLogger, barHanlder))
+	http.HandleFunc("/foo", middle.WithLog(InfoLogger, fooHanlder))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

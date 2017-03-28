@@ -2,9 +2,9 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE.txt file.
 
-// Package httph exposes functions & types usefull
+// Package middle exposes functions & types usefull
 // when dealing with net/http.
-package httph
+package middle
 
 import (
 	"log"
