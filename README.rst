@@ -15,7 +15,7 @@ middle
 Intro
 =====
 
-A go package with functions and types usefull when building http services.
+A go package usefull when building http services.
 
 Usage and examples
 ==================
