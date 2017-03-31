@@ -7,8 +7,8 @@ middle
 .. |image0| image:: https://godoc.org/github.com/eraclitux/middle?status.png
 .. _image0: https://godoc.org/github.com/eraclitux/middle
 
-.. |image1| image:: https://drone.io/github.com/eraclitux/middle/status.png
-.. _image1: https://drone.io/github.com/eraclitux/middle/latest
+.. |image1| image:: https://travis-ci.org/eraclitux/middle.svg?branch=master
+.. _image1: https://travis-ci.org/eraclitux/middle
 
 .. contents::
 
