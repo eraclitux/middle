@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/eraclitux/stracer"
+	"github.com/eraclitux/trace"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
 )
@@ -104,7 +104,7 @@ func MustAuth(cookieName string, a Hasher, next http.Handler) http.Handler {
 			error()
 			return
 		}
-		stracer.Traceln(username, passwd)
+		trace.Traceln(username, passwd)
 
 		hash, err := a.GetHash(username)
 		if err != nil {

@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/eraclitux/stracer"
+	"github.com/eraclitux/trace"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -120,7 +120,7 @@ func TestMustAuth(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		stracer.Traceln("resp from server:", string(message))
+		trace.Traceln("resp from server:", string(message))
 		if res.StatusCode != r.ExpectedCode {
 			t.Logf("case %d: %+v", i, r)
 			t.Fatal("expected:", r.ExpectedCode, "received:", res.Status, "body:", string(message))
