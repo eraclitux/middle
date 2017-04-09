@@ -17,13 +17,13 @@ const (
 	GenericData  = "generic-data"
 )
 
-// SharedData is a threadsafe container that enables
-// to share data between http handlers decorators.
+// SharedData is a concurrency safe type that enables
+// data to be shared between http handlers decorators.
 var SharedData Sharer
 
 type httpVars map[*http.Request]map[string]interface{}
 
-// TODO drop sessions every x time or memory leak here.
+// FIXME drop sessions every x time or memory leak here.
 var sessions map[string]struct{} = make(map[string]struct{})
 
 var httpVarsLock sync.RWMutex
@@ -43,7 +43,7 @@ type Sharer interface {
 // credentials retrieving from different
 // backends.
 type Hasher interface {
-	// GetHash retieve hashed password from
+	// GetHash retrieves hashed password from
 	// backend for user u.
 	// It returns error if user is not found.
 	GetHash(u string) ([]byte, error)

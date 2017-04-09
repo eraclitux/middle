@@ -80,16 +80,16 @@ func TestWithSharedData(t *testing.T) {
 }
 
 func TestMustAuth(t *testing.T) {
-	ts := []struct {
-		User         string
-		Passwd       string
-		ExpectedCode int
+	goodPasswd := "XXXYYYzzz"
+	authCases := []struct {
+		user         string
+		passwd       string
+		expectedCode int
 	}{
-		{"pippo", "XXXYYYzzz", 200},
+		{"pippo", goodPasswd, 200},
 		{"pippo", "xxxyyyZZZ", 401},
 		{"carl", "", 401},
 	}
-	passwd := "XXXYYYzzz"
 	cookieName := "my-cookie-name"
 	innerHandler := func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(cookieName)
@@ -99,31 +99,29 @@ func TestMustAuth(t *testing.T) {
 		}
 		fmt.Fprintf(w, "you are authenticated...")
 	}
-	h := MustAuth(cookieName, createHasher(passwd), http.HandlerFunc(innerHandler))
+	h := MustAuth(cookieName, createHasher(goodPasswd), innerHandler)
 	testServer := httptest.NewServer(h)
 	defer testServer.Close()
-
-	for i, r := range ts {
+	for i, r := range authCases {
 		req, err := http.NewRequest("GET", testServer.URL, nil)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
-
-		req.SetBasicAuth(r.User, r.Passwd)
+		req.SetBasicAuth(r.user, r.passwd)
 		c := http.Client{}
 		res, err := c.Do(req)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		defer res.Body.Close()
 		message, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
-		trace.Traceln("resp from server:", string(message))
-		if res.StatusCode != r.ExpectedCode {
+		trace.Println("resp from server:", string(message))
+		if res.StatusCode != r.expectedCode {
+			t.Error("expected:", r.expectedCode, "received:", res.Status, "body:", string(message))
 			t.Logf("case %d: %+v", i, r)
-			t.Fatal("expected:", r.ExpectedCode, "received:", res.Status, "body:", string(message))
 		}
 	}
 }
@@ -131,10 +129,8 @@ func TestMustAuth(t *testing.T) {
 func TestRandomString(t *testing.T) {
 	a := randomString(32)
 	b := randomString(32)
-	if testing.Verbose() {
-		fmt.Println("random strings:", a, b)
-	}
 	if a == b {
 		t.Fatal("not random!")
+		t.Log("random strings:", a, b)
 	}
 }

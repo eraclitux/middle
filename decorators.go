@@ -2,8 +2,8 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE.txt file.
 
-// Package middle exposes functions & types usefull
-// when dealing with http services.
+// Package middle exposes functions & types useful
+// building http services.
 package middle
 
 import (
@@ -17,17 +17,19 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
-// WithCORS is a decorator function that adds relevant headers to response
-// to permit CORS requests.
+// WithCORS adds necessary headers to response
+// to permit GET/POST CORS requests.
 func WithCORS(fn http.HandlerFunc) http.HandlerFunc {
+	// BUG(eraclitux) fully implement CORS.
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		fn(w, r)
 	}
 }
 
-// WithSharedData is a decorator function that initializes SharedData
-// for the given http.Request freeing memory when possible.
+// WithSharedData initializes SharedData
+// for the given http.Request permitting to share types
+// between http.Handler.
 func WithSharedData(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		SharedData.init(r)
@@ -36,8 +38,7 @@ func WithSharedData(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WithMongo is a decorator function that let passed HandlerFunc
-// to use a session to MongoDB.
+// WithMongo calls session.Copy() and inserts it into SharedData.
 func WithMongo(session *mgo.Session, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s := session.Copy()
@@ -48,9 +49,8 @@ func WithMongo(session *mgo.Session, fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WithGenericData is a decorator function that let passed HandlerFunc
-// to use a generic data. Caution must be used and the passed interfece{}
-// must be only readen
+// WithGenericData inserts a type into SharedData so is can be read
+// from subsequent http.HandlerFunc(s).
 func WithGenericData(v interface{}, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		SharedData.Insert(r, GenericData, v)
@@ -59,19 +59,21 @@ func WithGenericData(v interface{}, fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WithLog is a decorator that calls Println method
-// of provided logger to log received requests.
-// Format is:
+// WithLog calls Println on logger
+// with following arguments:
+//
 // <http method> <remote addr> <requested url>
+//
 // If X-Real-IP is found in headers it is used as <remote addr>
 // with (X-Real-IP) added.
 func WithLog(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
-	//TODO use constants to define format like in log package.
 	return func(w http.ResponseWriter, r *http.Request) {
 		remoteAddr := r.Header.Get("X-Real-IP")
 		if remoteAddr == "" {
 			remoteAddr = r.RemoteAddr
 		} else {
+			// FIXME write a benchmark to check if is worth string concatenation
+			// optimization using []byte.
 			remoteAddr += " (X-Real-IP)"
 		}
 		logger.Println(r.Method, remoteAddr, r.URL)
@@ -79,43 +81,50 @@ func WithLog(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WIP, add tests
-func MustAuth(cookieName string, a Hasher, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// MustAuth checks if request is authenticated verifying
+// that its cookie is present in registered sessions.
+//
+// BUG(eraclitux) session storage leaks.
+func MustAuth(cookieName string, hasher Hasher, next http.HandlerFunc) http.HandlerFunc {
+	// Heavily inspired by:
+	// https://github.com/syncthing/syncthing/blob/161326c5489d000972a6846564f0ce12779bd8f2/cmd/syncthing/gui_auth.go
+	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(cookieName)
 		if err == nil && cookie != nil {
+			// FIXME use RWMutex
 			sessionsMut.Lock()
 			_, ok := sessions[cookie.Value]
 			sessionsMut.Unlock()
 			if ok {
-				next.ServeHTTP(w, r)
+				next(w, r)
 				return
 			}
 		}
-
 		error := func() {
+			// Mitigate risk of timing attacks.
+			// https://en.wikipedia.org/wiki/Timing_attack
+			// FIXME use crypto/rand
 			time.Sleep(time.Duration(rand.Intn(100)+100) * time.Millisecond)
 			w.Header().Set("WWW-Authenticate", "Basic realm=\"Authorization Required\"")
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		}
-
 		username, passwd, ok := r.BasicAuth()
 		if !ok {
 			error()
 			return
 		}
-		trace.Traceln(username, passwd)
-
-		hash, err := a.GetHash(username)
+		trace.Println(username, passwd)
+		hash, err := hasher.GetHash(username)
 		if err != nil {
 			error()
 			return
 		}
+		// TODO abstract hash verification putting
+		// this into Hasher.
 		if err := bcrypt.CompareHashAndPassword(hash, []byte(passwd)); err != nil {
 			error()
 			return
 		}
-
 		sessionid := randomString(32)
 		sessionsMut.Lock()
 		sessions[sessionid] = struct{}{}
@@ -125,7 +134,6 @@ func MustAuth(cookieName string, a Hasher, next http.Handler) http.Handler {
 			Value:  sessionid,
 			MaxAge: 0,
 		})
-
-		next.ServeHTTP(w, r)
-	})
+		next(w, r)
+	}
 }
