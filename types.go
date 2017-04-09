@@ -18,7 +18,7 @@ const (
 )
 
 // SharedData is a concurrency safe type that enables
-// data to be shared between http handlers decorators.
+// data to be shared between subsequent handlers decorators.
 var SharedData Sharer
 
 type httpVars map[*http.Request]map[string]interface{}
@@ -42,6 +42,7 @@ type Sharer interface {
 // Hasher define a way to generalize
 // credentials retrieving from different
 // backends.
+// MUST be concurrency safe.
 type Hasher interface {
 	// GetHash retrieves hashed password from
 	// backend for user u.

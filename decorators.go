@@ -120,7 +120,7 @@ func MustAuth(cookieName string, hasher Hasher, next http.HandlerFunc) http.Hand
 			return
 		}
 		// TODO abstract hash verification putting
-		// this into Hasher.
+		// this into Hasher (renaming this interface).
 		if err := bcrypt.CompareHashAndPassword(hash, []byte(passwd)); err != nil {
 			error()
 			return
