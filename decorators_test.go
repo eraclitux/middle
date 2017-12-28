@@ -11,7 +11,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/eraclitux/trace"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -90,16 +89,15 @@ func TestMustAuth(t *testing.T) {
 		{"pippo", "xxxyyyZZZ", 401},
 		{"carl", "", 401},
 	}
-	cookieName := "my-cookie-name"
-	innerHandler := func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(cookieName)
+	innerHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie(authCookieName)
 		if err == nil && cookie != nil {
-			http.Error(w, "no coockies found :(", http.StatusUnauthorized)
+			http.Error(w, "no cookie found :(", http.StatusUnauthorized)
 			return
 		}
 		fmt.Fprintf(w, "you are authenticated...")
-	}
-	h := MustAuth(cookieName, createHasher(goodPasswd), innerHandler)
+	})
+	h := MustAuth(createHasher(goodPasswd), innerHandler)
 	testServer := httptest.NewServer(h)
 	defer testServer.Close()
 	for i, r := range authCases {
@@ -118,7 +116,6 @@ func TestMustAuth(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		trace.Println("resp from server:", string(message))
 		if res.StatusCode != r.expectedCode {
 			t.Error("expected:", r.expectedCode, "received:", res.Status, "body:", string(message))
 			t.Logf("case %d: %+v", i, r)

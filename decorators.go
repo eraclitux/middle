@@ -12,9 +12,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/eraclitux/trace"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
+)
+
+const (
+	authCookieName = "session-id"
 )
 
 // WithCORS adds necessary headers to response
@@ -85,18 +88,18 @@ func WithLog(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
 // that its cookie is present in registered sessions.
 //
 // BUG(eraclitux) session storage leaks.
-func MustAuth(cookieName string, hasher Hasher, next http.HandlerFunc) http.HandlerFunc {
+func MustAuth(hasher Hasher, next http.Handler) http.HandlerFunc {
 	// Heavily inspired by:
 	// https://github.com/syncthing/syncthing/blob/161326c5489d000972a6846564f0ce12779bd8f2/cmd/syncthing/gui_auth.go
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(cookieName)
+		cookie, err := r.Cookie(authCookieName)
 		if err == nil && cookie != nil {
 			// FIXME use RWMutex
 			sessionsMut.Lock()
 			_, ok := sessions[cookie.Value]
 			sessionsMut.Unlock()
 			if ok {
-				next(w, r)
+				next.ServeHTTP(w, r)
 				return
 			}
 		}
@@ -113,7 +116,6 @@ func MustAuth(cookieName string, hasher Hasher, next http.HandlerFunc) http.Hand
 			error()
 			return
 		}
-		trace.Println(username, passwd)
 		hash, err := hasher.GetHash(username)
 		if err != nil {
 			error()
@@ -130,10 +132,10 @@ func MustAuth(cookieName string, hasher Hasher, next http.HandlerFunc) http.Hand
 		sessions[sessionid] = struct{}{}
 		sessionsMut.Unlock()
 		http.SetCookie(w, &http.Cookie{
-			Name:   cookieName,
+			Name:   authCookieName,
 			Value:  sessionid,
 			MaxAge: 0,
 		})
-		next(w, r)
+		next.ServeHTTP(w, r)
 	}
 }

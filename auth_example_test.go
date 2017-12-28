@@ -24,8 +24,8 @@ func createHasher(p string) middle.Hasher {
 }
 
 func ExampleMustAuth() {
-	h := createHasher("secret")
-	http.HandleFunc("/secured", middle.MustAuth("my-app-id", h, securedHandler))
+	hasher := createHasher("secret")
+	http.HandleFunc("/secured", middle.MustAuth(hasher, http.HandlerFunc(securedHandler)))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

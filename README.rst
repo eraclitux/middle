@@ -4,7 +4,7 @@ middle
 
 |image0|_ |image1|_ |image2|_
 
-.. |image0| image:: https://godoc.org/github.com/eraclitux/middle?status.png
+.. |image0| image:: https://godoc.org/github.com/eraclitux/middle?status.svg
 .. _image0: https://godoc.org/github.com/eraclitux/middle
 
 .. |image1| image:: https://travis-ci.org/eraclitux/middle.svg?branch=master
@@ -18,7 +18,7 @@ middle
 Intro
 =====
 
-A go package usefull when building http services.
+A go package useful when building http services.
 
 Usage and examples
 ==================
