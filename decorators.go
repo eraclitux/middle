@@ -46,14 +46,14 @@ func WithCORS(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// WithLog calls Println on logger
+// Log calls Println on logger
 // with following arguments:
 //
 // <http method> <remote addr> <requested url>
 //
 // If X-Real-IP is found in headers it is used as <remote addr>
 // with (X-Real-IP) added.
-func WithLog(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
+func Log(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		remoteAddr := r.Header.Get("X-Real-IP")
 		if remoteAddr == "" {

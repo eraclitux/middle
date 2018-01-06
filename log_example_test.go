@@ -14,11 +14,11 @@ import (
 )
 
 // This example shows how to log requests for different handlers.
-func ExampleWithLog() {
+func ExampleLog() {
 	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
 
-	http.HandleFunc("/bar", middle.WithLog(infoLogger, barHanlder))
-	http.HandleFunc("/foo", middle.WithLog(infoLogger, fooHanlder))
+	http.HandleFunc("/bar", middle.Log(infoLogger, barHanlder))
+	http.HandleFunc("/foo", middle.Log(infoLogger, fooHanlder))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
