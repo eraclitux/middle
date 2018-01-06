@@ -28,9 +28,9 @@ func createHasher(p string) Hasher {
 }
 
 func TestCORS(t *testing.T) {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello world")
-	}
+	})
 	h := CORS(handler)
 	testServer := httptest.NewServer(http.HandlerFunc(h))
 	defer testServer.Close()

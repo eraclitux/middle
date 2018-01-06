@@ -38,11 +38,11 @@ type Hasher interface {
 
 // CORS adds necessary headers to response
 // to permit GET/POST CORS requests.
-func CORS(fn http.HandlerFunc) http.HandlerFunc {
+func CORS(next http.Handler) http.HandlerFunc {
 	// BUG(eraclitux) fully implement CORS.
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		fn(w, r)
+		next.ServeHTTP(w, r)
 	}
 }
 
