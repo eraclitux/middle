@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -25,15 +23,13 @@ var sessions map[string]struct{} = make(map[string]struct{})
 
 var sessionsMut sync.RWMutex
 
-// Hasher define a way to generalize
-// credentials retrieving from different
-// backends.
-// MUST be concurrency safe.
-type Hasher interface {
-	// GetHash retrieves hashed password from
-	// backend for user u.
-	// It returns error if user is not found.
-	GetHash(u string) ([]byte, error)
+// Authorizer models credentials verification
+// to permit different backends and hash algorithms.
+// Implementation MUST be concurrency safe.
+type Authorizer interface {
+	// Verify uses its backend to verify password
+	// for a given username.
+	Verify(user, passw string) bool
 }
 
 // CORS adds necessary headers to response
@@ -74,7 +70,7 @@ func Log(logger *log.Logger, next http.Handler) http.HandlerFunc {
 // with no valid session.
 //
 // BUG(eraclitux) session storage leaks.
-func Auth(hasher Hasher, next http.Handler) http.HandlerFunc {
+func Auth(authorizer Authorizer, next http.Handler) http.HandlerFunc {
 	// Heavily inspired by:
 	// https://github.com/syncthing/syncthing/blob/161326c5489d000972a6846564f0ce12779bd8f2/cmd/syncthing/gui_auth.go
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -102,14 +98,7 @@ func Auth(hasher Hasher, next http.Handler) http.HandlerFunc {
 			error()
 			return
 		}
-		hash, err := hasher.GetHash(username)
-		if err != nil {
-			error()
-			return
-		}
-		// TODO abstract hash verification putting
-		// this into Hasher (renaming this interface).
-		if err := bcrypt.CompareHashAndPassword(hash, []byte(passwd)); err != nil {
+		if !authorizer.Verify(username, passwd) {
 			error()
 			return
 		}

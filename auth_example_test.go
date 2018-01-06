@@ -11,21 +11,32 @@ import (
 )
 
 type store struct {
-	H []byte
+	hash     []byte
+	username string
 }
 
-func (s *store) GetHash(u string) ([]byte, error) {
-	return s.H, nil
+func (s *store) Verify(u, p string) bool {
+	if s.username != u {
+		return false
+	}
+	if err := bcrypt.CompareHashAndPassword(s.hash, []byte(p)); err != nil {
+		return false
+	}
+	return true
 }
 
-func createHasher(p string) middle.Hasher {
-	h, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
-	return &store{H: h}
+func makeAuthorizer(username, passwd string) middle.Authorizer {
+	// Never store clear text password!
+	h, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	return &store{hash: h, username: username}
 }
 
 func ExampleAuth() {
-	hasher := createHasher("secret")
-	http.HandleFunc("/secured", middle.Auth(hasher, http.HandlerFunc(securedHandler)))
+	authorizer := makeAuthorizer("admin", "secret")
+	http.HandleFunc("/secured", middle.Auth(authorizer, http.HandlerFunc(securedHandler)))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

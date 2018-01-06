@@ -15,16 +15,26 @@ import (
 )
 
 type store struct {
-	H []byte
+	hash []byte
+	user string
 }
 
-func (s *store) GetHash(u string) ([]byte, error) {
-	return s.H, nil
+func (s *store) Verify(u, p string) bool {
+	if u != s.user {
+		return false
+	}
+	if err := bcrypt.CompareHashAndPassword(s.hash, []byte(p)); err != nil {
+		return false
+	}
+	return true
 }
 
-func createHasher(p string) Hasher {
-	h, _ := bcrypt.GenerateFromPassword([]byte(p), bcrypt.DefaultCost)
-	return &store{H: h}
+func makeAuthorizer(user, passwd string) Authorizer {
+	h, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	return &store{hash: h, user: user}
 }
 
 func TestCORS(t *testing.T) {
@@ -49,12 +59,14 @@ func TestCORS(t *testing.T) {
 
 func TestAuth(t *testing.T) {
 	goodPasswd := "XXXYYYzzz"
+	goodUser := "admin"
 	authCases := []struct {
 		user         string
 		passwd       string
 		expectedCode int
 	}{
-		{"pippo", goodPasswd, 200},
+		{goodUser, goodPasswd, 200},
+		{"pluto", goodPasswd, 401},
 		{"pippo", "xxxyyyZZZ", 401},
 		{"carl", "", 401},
 	}
@@ -66,7 +78,7 @@ func TestAuth(t *testing.T) {
 		}
 		fmt.Fprintf(w, "you are authenticated...")
 	})
-	h := Auth(createHasher(goodPasswd), innerHandler)
+	h := Auth(makeAuthorizer(goodUser, goodPasswd), innerHandler)
 	testServer := httptest.NewServer(h)
 	defer testServer.Close()
 	for i, r := range authCases {
