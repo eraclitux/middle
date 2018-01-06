@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license
 // that can be found in the LICENSE.txt file.
 
-// Package middle exposes functions & types useful
+// Package middle exposes functions useful
 // building http services.
 package middle
 
@@ -68,11 +68,13 @@ func WithLog(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// MustAuth checks if request is authenticated verifying
+// Auth checks if request is authenticated with basic auth verifying
 // that its cookie is present in registered sessions.
+// If request if from browser it will prompt for credentials
+// with no valid session.
 //
 // BUG(eraclitux) session storage leaks.
-func MustAuth(hasher Hasher, next http.Handler) http.HandlerFunc {
+func Auth(hasher Hasher, next http.Handler) http.HandlerFunc {
 	// Heavily inspired by:
 	// https://github.com/syncthing/syncthing/blob/161326c5489d000972a6846564f0ce12779bd8f2/cmd/syncthing/gui_auth.go
 	return func(w http.ResponseWriter, r *http.Request) {

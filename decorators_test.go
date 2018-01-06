@@ -47,7 +47,7 @@ func TestWithCORS(t *testing.T) {
 	}
 }
 
-func TestMustAuth(t *testing.T) {
+func TestAuth(t *testing.T) {
 	goodPasswd := "XXXYYYzzz"
 	authCases := []struct {
 		user         string
@@ -66,7 +66,7 @@ func TestMustAuth(t *testing.T) {
 		}
 		fmt.Fprintf(w, "you are authenticated...")
 	})
-	h := MustAuth(createHasher(goodPasswd), innerHandler)
+	h := Auth(createHasher(goodPasswd), innerHandler)
 	testServer := httptest.NewServer(h)
 	defer testServer.Close()
 	for i, r := range authCases {
