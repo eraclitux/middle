@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,22 @@ import (
 const (
 	authCookieName = "session-id"
 )
+
+// FIXME drop sessions every x time or memory leak here.
+var sessions map[string]struct{} = make(map[string]struct{})
+
+var sessionsMut sync.RWMutex
+
+// Hasher define a way to generalize
+// credentials retrieving from different
+// backends.
+// MUST be concurrency safe.
+type Hasher interface {
+	// GetHash retrieves hashed password from
+	// backend for user u.
+	// It returns error if user is not found.
+	GetHash(u string) ([]byte, error)
+}
 
 // WithCORS adds necessary headers to response
 // to permit GET/POST CORS requests.
