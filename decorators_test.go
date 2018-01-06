@@ -27,11 +27,11 @@ func createHasher(p string) Hasher {
 	return &store{H: h}
 }
 
-func TestWithCORS(t *testing.T) {
+func TestCORS(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello world")
 	}
-	h := WithCORS(handler)
+	h := CORS(handler)
 	testServer := httptest.NewServer(http.HandlerFunc(h))
 	defer testServer.Close()
 	res, err := http.Get(testServer.URL)

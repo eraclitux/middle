@@ -36,9 +36,9 @@ type Hasher interface {
 	GetHash(u string) ([]byte, error)
 }
 
-// WithCORS adds necessary headers to response
+// CORS adds necessary headers to response
 // to permit GET/POST CORS requests.
-func WithCORS(fn http.HandlerFunc) http.HandlerFunc {
+func CORS(fn http.HandlerFunc) http.HandlerFunc {
 	// BUG(eraclitux) fully implement CORS.
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
