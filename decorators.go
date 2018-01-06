@@ -53,7 +53,7 @@ func CORS(fn http.HandlerFunc) http.HandlerFunc {
 //
 // If X-Real-IP is found in headers it is used as <remote addr>
 // with (X-Real-IP) added.
-func Log(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
+func Log(logger *log.Logger, next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		remoteAddr := r.Header.Get("X-Real-IP")
 		if remoteAddr == "" {
@@ -64,7 +64,7 @@ func Log(logger *log.Logger, fn http.HandlerFunc) http.HandlerFunc {
 			remoteAddr += " (X-Real-IP)"
 		}
 		logger.Println(r.Method, remoteAddr, r.URL)
-		fn(w, r)
+		next.ServeHTTP(w, r)
 	}
 }
 
