@@ -47,37 +47,6 @@ func TestWithCORS(t *testing.T) {
 	}
 }
 
-func TestWithSharedData(t *testing.T) {
-	innerHandler := func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := SharedData.Get(r, "test-key"); !ok {
-			t.Fatal("test-key not present")
-		}
-		fmt.Fprintf(w, "Hello world")
-	}
-	outerHandler := func(fn http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			SharedData.Insert(r, "test-key", struct{}{})
-			defer SharedData.Delete(r, "test-key")
-			fn(w, r)
-		}
-	}
-	h := WithSharedData(outerHandler(innerHandler))
-	testServer := httptest.NewServer(http.HandlerFunc(h))
-	defer testServer.Close()
-	res, err := http.Get(testServer.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer res.Body.Close()
-	message, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(message) != "Hello world" {
-		t.Fatal("unexpected message")
-	}
-}
-
 func TestMustAuth(t *testing.T) {
 	goodPasswd := "XXXYYYzzz"
 	authCases := []struct {

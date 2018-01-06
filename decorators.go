@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/mgo.v2"
 )
 
 const (
@@ -26,38 +25,6 @@ func WithCORS(fn http.HandlerFunc) http.HandlerFunc {
 	// BUG(eraclitux) fully implement CORS.
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		fn(w, r)
-	}
-}
-
-// WithSharedData initializes SharedData
-// for the given http.Request permitting to share types
-// between http.Handler.
-func WithSharedData(fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		SharedData.init(r)
-		defer SharedData.drop(r)
-		fn(w, r)
-	}
-}
-
-// WithMongo calls session.Copy() and inserts it into SharedData.
-func WithMongo(session *mgo.Session, fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		s := session.Copy()
-		defer s.Close()
-		SharedData.Insert(r, MongoSession, s)
-		defer SharedData.Delete(r, MongoSession)
-		fn(w, r)
-	}
-}
-
-// WithGenericData inserts a type into SharedData so is can be read
-// from subsequent http.HandlerFunc(s).
-func WithGenericData(v interface{}, fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		SharedData.Insert(r, GenericData, v)
-		defer SharedData.Delete(r, GenericData)
 		fn(w, r)
 	}
 }
